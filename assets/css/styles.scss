@@ -1,0 +1,53 @@
+// add the local poppin fonts here
+@font-face {
+    font-family: 'Poppins';
+    src: url(../fonts/Poppins-Regular.ttf);
+    font-weight: normal;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url(../fonts/Poppins-Bold.ttf);
+    font-weight: bold;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url(../fonts/Poppins-Italic.ttf);
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url(../fonts/Poppins-BoldItalic.ttf);
+    font-weight: bold;
+    font-style: italic;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Poppins, sans-serif;
+}
+
+.page-enter-active,
+.page-leave-active {
+  transition: all 0.4s;
+}
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+  filter: blur(1rem);
+}
+
+
+.transition-enter-active,
+.transition-leave-active {
+  transition: all 0.4s;
+}
+.transition-enter-from,
+.transition-leave-to {
+  opacity: 0;
+  filter: blur(1rem);
+}
