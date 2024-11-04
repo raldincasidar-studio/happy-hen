@@ -43,7 +43,23 @@
                         </v-col>
                         <v-col cols="12" md="8">
                             <v-img v-if="prediction?.filename" :src="`http://localhost:5000/get-images/${prediction?.filename}`"></v-img>
-                            <pre>{{ prediction }}</pre>
+                            <v-table fixed-header>
+                                <thead>
+                                    <tr>
+                                        <th class="text-left">Month</th>
+                                        <th class="text-left" v-if="prediction?.actual">Actual</th>
+                                        <th class="text-left">Predicted</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(item, index) in prediction?.predicted_with_dates" :key="index">
+                                        <td>{{ item.date }}</td>
+                                        <td v-if="prediction?.actual">{{ prediction?.actual[index] }} eggs</td>
+                                        <td>{{ item.predicted }} eggs</td>
+                                    </tr>
+                                </tbody>
+                            </v-table>
+                            <!-- <pre>{{ prediction }}</pre> -->
                         </v-col>
                     </v-row>
                 </v-card-text>
@@ -106,6 +122,7 @@
   
 
   async function generatePrediction() {
+  
   const response = await axios.post('http://localhost:5000/generate-prediction', {
     months: prediction_month.value
   }, {

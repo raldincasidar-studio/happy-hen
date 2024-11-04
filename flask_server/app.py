@@ -118,7 +118,6 @@ def delete_file():
     except Exception as e:
         return jsonify({"error": f"An error occurred: {e}"}), 500
 
-
 @app.route("/prediction", methods=["GET"])
 def get_prediction():
     # Load the uploaded file into a DataFrame
@@ -131,7 +130,10 @@ def get_prediction():
     df['Date'] = pd.to_datetime(df['Date'], format='%b-%y')
     df['Month'] = df['Date'].dt.month
     df['Year'] = df['Date'].dt.year
-    df = df.drop(columns=['Date'])
+    df['Date_str'] = df['Date'].dt.strftime('%y-%b')
+
+    # Sort the data by date ascending
+    df = df.sort_values(by='Date')
 
     # Split data into features (X) and target (y)
     X = df[['Month', 'Year']]
@@ -153,11 +155,12 @@ def get_prediction():
 
     # Plot actual vs predicted values
     plt.ioff()
+    plt.switch_backend('agg')
     plt.figure(figsize=(10, 6))
-    plt.plot(y_test.values, label='Actual Egg Production', marker='o')
-    plt.plot(y_pred, label='Predicted Egg Production', marker='x')
+    plt.plot(df.loc[X_test.index, 'Date_str'], y_test.values, label='Actual Egg Production', marker='o')
+    plt.plot(df.loc[X_test.index, 'Date_str'], y_pred, label='Predicted Egg Production', marker='x')
     plt.title('Actual vs Predicted Egg Production')
-    plt.xlabel('Test Set Index')
+    plt.xlabel('Date')
     plt.ylabel('Egg Production')
     plt.legend()
     plt.grid(True)
@@ -169,8 +172,8 @@ def get_prediction():
     plt.savefig(random_filename, bbox_inches='tight')
     plt.close()
 
-    # Calculate accuracy percentage
-    accuracy = (np.round(y_pred) == np.round(y_test)).mean() * 100
+    # Include dates with predictions
+    predicted_with_dates = [{"date": date, "predicted": pred} for date, pred in zip(df.loc[X_test.index, 'Date_str'], y_pred)]
 
     # Return the results as JSON
     return jsonify({
@@ -178,11 +181,8 @@ def get_prediction():
         "r2": r2,
         "plot_url": random_filename,
         "filename": filename_generated,
-        "mse": mse,
-        "r2": r2,
-        # "accuracy": accuracy,
         "actual": y_test.values.tolist(),
-        "predicted": y_pred.tolist()
+        "predicted_with_dates": predicted_with_dates
     })
 
 
@@ -229,6 +229,7 @@ def generate_prediction():
     current_date = datetime.date.today()
     future_date = current_date
     y_pred = []
+    predicted_with_dates = []
     for _ in range(months_advance):
         future_date = future_date + relativedelta(months=+1)
         future_month = future_date.month
@@ -242,10 +243,13 @@ def generate_prediction():
         rf_model.fit(X, y)
 
         # Make predictions on the test set
-        y_pred.append(rf_model.predict(X_pred)[0])
+        pred = rf_model.predict(X_pred)[0]
+        y_pred.append(pred)
+        predicted_with_dates.append({"date": future_date.strftime('%b %Y'), "predicted": pred})
 
     # Plot actual vs predicted values
     plt.ioff()
+    plt.switch_backend('agg')
     plt.figure(figsize=(10, 6))
     plt.plot(y.values, label='Actual Egg Production', marker='o')
     plt.plot(list(range(len(y), len(y) + months_advance)), y_pred, label='Predicted Egg Production', marker='x')
@@ -269,7 +273,89 @@ def generate_prediction():
         "plot_url": random_filename,
         "filename": filename_generated,
         "months_advance": months_advance,
-        "predictions": y_pred
+        "predictions": y_pred,
+        "predicted_with_dates": predicted_with_dates
+    })
+
+
+@app.route("/generate-report", methods=["POST"])
+def generate_report():
+    months_advance = 3
+
+    print(months_advance);
+
+    # Load the uploaded file into a DataFrame
+    file_name = os.listdir('uploads')[0]  # Get the name of the uploaded file
+    df = pd.read_excel(os.path.join('uploads', file_name), engine='openpyxl')
+
+    # Data preprocessing
+    print(df.head())  # Check the actual data
+    df.columns = ['Date', 'Egg Production']
+    df['Date'] = pd.to_datetime(df['Date'], format='%b-%y')
+    df['Month'] = df['Date'].dt.month
+    df['Year'] = df['Date'].dt.year
+    df = df.drop(columns=['Date'])
+
+    # Split data into features (X) and target (y)
+    X = df[['Month', 'Year']]
+    y = df['Egg Production']
+
+    # Generate prediction month advance from current date
+    current_date = datetime.date.today()
+    future_date = current_date
+    y_pred = []
+    insights = []
+    predictions_table = []
+    for _ in range(months_advance):
+        future_date = future_date + relativedelta(months=+1)
+        future_month = future_date.month
+        future_year = future_date.year
+
+        # Prepare data for prediction
+        X_pred = pd.DataFrame([[future_month, future_year]], columns=['Month', 'Year'])
+
+        # Initialize and train the Random Forest model
+        rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
+        rf_model.fit(X, y)
+
+        # Make predictions on the test set
+        y_pred.append(rf_model.predict(X_pred)[0])
+
+        # Generate insights
+        insights.append(f"Based on the current trend, the predicted egg production for {future_month}/{future_year} is {y_pred[-1]:.2f}.")
+
+        # Generate predictions table
+        predictions_table.append([future_month, future_year, y_pred[-1]])
+
+    # Plot actual vs predicted values
+    plt.ioff()
+    plt.switch_backend('agg')
+    plt.figure(figsize=(10, 6))
+    plt.plot(y.values, label='Actual Egg Production', marker='o')
+    plt.plot(list(range(len(y), len(y) + months_advance)), y_pred, label='Predicted Egg Production', marker='x')
+    plt.title('Actual vs Predicted Egg Production')
+    plt.xlabel('Test Set Index')
+    plt.ylabel('Egg Production')
+    plt.legend()
+    plt.grid(True)
+
+    # Save the plot with a random filename
+    os.makedirs('ai_results', exist_ok=True)
+    filename_generated = f"result_{''.join(random.choices(string.ascii_letters + string.digits, k=8))}.png"
+    random_filename = f"ai_results/{filename_generated}"
+    plt.savefig(random_filename, bbox_inches='tight')
+    plt.close()
+
+    # Return the results as JSON
+    return jsonify({
+        "mse": None,
+        "r2": None,
+        "plot_url": random_filename,
+        "filename": filename_generated,
+        "months_advance": months_advance,
+        "predictions": y_pred,
+        "insights": insights,
+        "predictions_table": predictions_table
     })
 
 

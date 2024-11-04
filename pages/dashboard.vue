@@ -37,6 +37,8 @@
                 <!-- <v-chart
                   :option="option1"
                 /> -->
+                <v-img v-if="image1" :src="`http://localhost:5000/get-images/${image1}`"></v-img>
+                <pre>{{ image1 }}</pre>
               </v-card-text>
             </v-card>
           </v-col>
@@ -47,18 +49,8 @@
                 <!-- <v-chart
                   :option="option2"
                 /> -->
-              </v-card-text>
-            </v-card>
-          </v-col>
-        </v-row>
-        <v-row>
-          <v-col cols="12">
-            <v-card>
-              <v-card-title>Monthly Egg Production</v-card-title>
-              <v-card-text>
-                <!-- <v-chart
-                  :option="option3"
-                /> -->
+                <v-img v-if="image2" :src="`http://localhost:5000/get-images/${image2}`"></v-img>
+                <pre>{{ image2 }}</pre>
               </v-card-text>
             </v-card>
           </v-col>
@@ -80,6 +72,7 @@ import {
   LegendComponent
 } from 'echarts/components'
 import VChart from 'vue-echarts'
+import axios from 'axios'
 
 use([
   CanvasRenderer,
@@ -99,5 +92,57 @@ const items = [
 ]
 
 const userData = useStorage('userData', '');
+
+
+let image1 = ref('');
+
+let image2 = ref('');
+
+async function generatePrediction() {
+  
+  let response;
+  let response1 = await axios.get('http://localhost:5000/prediction', {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': JSON.parse(userData.value).token
+    }
+  });
+  let response2 = await axios.post('http://localhost:5000/generate-prediction', {
+    months: 1
+  }, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': JSON.parse(userData.value).token
+    }
+  });
+
+if (response1.error) {
+  console.error('Error fetching prediction:', response.error);
+  // alert('Error fetching prediction');
+  return;
+}
+
+if (response2.error) {
+  console.error('Error fetching prediction:', response.error);
+  // alert('Error fetching prediction');
+  return;
+}
+
+image1.value = response1.data.filename;
+
+
+image2.value = response2.data.filename;
+
+console.log('Prediction files:', response.data);
+
+data.value = response.data;
+
+console.log(data.value)
+}
+
+onMounted(() => {
+  console.log(userData.value)
+  generatePrediction();
+})
 </script>
 

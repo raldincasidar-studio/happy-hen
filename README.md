@@ -1,75 +1,24 @@
-# Nuxt Minimal Starter
+# Nuxtjs + Flask Codebase
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+This is a codebase for a web application using Nuxtjs as frontend and Flask as backend.
 
-## Setup
+## Installation
 
-Make sure to install dependencies:
+### Prerequisites
 
-```bash
-# npm
-npm install
+* Nodejs installed in your system
+* Python installed in your system
+* pip (python package manager) installed in your system
+* A code editor or IDE of your choice
 
-# pnpm
-pnpm install
+### Frontend (Nuxtjs)
 
-# yarn
-yarn install
+1. Open your terminal and navigate to the frontend directory
+2. Install the dependencies by running the command `npm install` or `yarn install`
+3. Once the dependencies are installed, you can start the development server by running the command `npm run dev` or `yarn dev`
 
-# bun
-bun install
-```
+### Backend (Flask)
 
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+1. Open your terminal and navigate to the backend directory
+2. Install the dependencies by running the command `pip install -r requirements.txt`
+3. Once the dependencies are installed, you can start the development server by running the command `python app.py`
